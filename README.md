@@ -47,7 +47,6 @@ to a seprate server, rather, it prints to the same device in which the module is
   Step 2: CD to the destination at which the cloned files are located.<br />
   Step 3: If you do not have the 'ghostKey.ko' file, run the 'make' command.<br />
   Step 4: Type in 'sudo insmod ghostKey.ko'<br />
-        The Module is now inserted on to your machine<br />
   Step 5: Upon 'sudo <command> <enter> recording will start.<br />
   Step 6: The next text typed in will be considered a password and will be stored.<br />
   Step 7: Type in 'sudo rmmod ghostKey.ko'<br />
