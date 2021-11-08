@@ -3,7 +3,7 @@
 
 ## Features
 :computer: Print User Input to Dmesg <br />
-:computer: Reognize When a User will Type in Their Password <br />
+:computer: Recognize When a User will Type in Their Password <br />
 :computer: Simple Code for a Kernel Space Interrupt Handler <br />
 
 ## Purpose
