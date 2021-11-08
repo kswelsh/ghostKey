@@ -55,7 +55,8 @@ to a seperate server, rather, it prints to the same device in which the module i
 ## Important Note
 Occasionally the printed out password will involve a certain key multiplied by a certain amount. An example of this
 is the key 'a' being outputted two too many times. This seems to be an issue with pr_info() inside of a handler, as it
-is somehow getting interuppted and constantly repeating the print. However, this does not stop the possibility of obtaining a users passcode.
+is somehow getting interuppted and constantly repeating the print (This is not yet confirmed, as it could also 
+be an issue related to bounce on the keyboard). However, this does not stop the possibility of obtaining a users passcode.
 Through extensive testing, this issue will only occur less than 20% of the time, depending on what is happening on your machine.
 Also, this issue can be easily solved by looking at what time certain keys are pressed, as repeats are normally at inhumane speeds.
 An assumption is also made that a user will type in their password correctly more times than incorrectly. To sucessfully obtain
