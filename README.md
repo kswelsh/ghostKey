@@ -43,4 +43,32 @@ to a seprate server, rather, it prints to the same device in which the module is
   - 421-425: Required module information.<br />
 
 ## Using the Module
+  Step 1: Clone the repo from GitHub.
+  Step 2: CD to the destination at which the cloned files are located.
+  Step 3: If you do not have the 'ghostKey.ko' file, run the 'make' command.
+  Step 4: Type in 'sudo insmod ghostKey.ko'
+        The Module is now inserted on to your machine
+  Step 5: Upon 'sudo <command> <enter> recording will start.
+  Step 6: The next text typed in will be considered a password and will be stored.
+  Step 7: Type in 'sudo rmmod ghostKey.ko'
+  Step 8: To view the information 'sudo dmesg'<br />
+  
+## Important Note
+Occasionally the printed out password will involve a certain key multiplied by a certain amount. An example of this
+is the key 'a' being outputted two too many times. This seems to be an issue with pr_info inside of a handler, as it
+is somehow getting interuppted and considtly repeating the print. However, this does not stop the possibility of obtaining a users passcode.
+Through extensive testing, this issue will only less than 20% of the time, depending on what is happening on your machine.
+An assumption is also made that a user will type in their password correctly more times than incorrectly. To sucessfully obtain
+a users password the module must be left on a machine for a significant amount of time, then data should be compared of every password input.<br />
+  
+## Future Updates
+Since this project was done as a project for a undergraduate college-level course, we were limtied on time. However, there are more features we would
+like to add over time.
+  - Functionality to send the password to a server.
+  - A seperate program to read through all of the data and generate a guess on what the password is.
+  - Ways to hide the Linux Module on the system.
+  - Ways of socially engineering the module onto someones system.
+  
+  
+  
 
