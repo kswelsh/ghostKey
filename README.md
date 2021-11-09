@@ -60,7 +60,10 @@ be an issue related to bounce on the keyboard). However, this does not stop the 
 Through extensive testing, this issue will occur in minimal amounts, depending on what is happening on your machine.
 Also, this issue can be easily solved by looking at what time certain keys are pressed, as repeats are normally at inhumane speeds.
 An assumption is also made that a user will type in their password correctly more times than incorrectly. To sucessfully obtain
-a users password the module must be left on a machine for a significant amount of time, then data should be compared of every password input.<br />
+a users password the module must be left on a machine for a significant amount of time, then data should be compared of every password input.
+Furthermore, an extension to this program shall be built which will read and compare all of the data to accurately predict what a users
+password is. This will be done at a later date, as the purpose of this project is just to gain a better understanding of the Linux
+Kernel and IRQ. <br />
   
 ## Future Updates
 Since this project was done as a project for a undergraduate college-level course, we were limtied on time. However, there are more features we would
