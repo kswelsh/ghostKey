@@ -274,7 +274,6 @@ static irqreturn_t ghostKey(int interruptRequest, void *developerID) {
 				else {
 					printDifference = printOne - printTwo;
 				}
-				pr_info("%lld", printDifference);
 				// If glitch possible based on same key issue
 				if ((dataCode == previousKey)) {
 					// If not a normal key press : could be imporved upon by tracing users normal press time
