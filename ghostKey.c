@@ -81,29 +81,29 @@ bool capsLockOn = false;
 // Time variables for inhumane key press bug
 // (Inhumane Key Press Issue)
 struct timespec64 time;
-long long int previousTime = 0;
-long long int currentTime = 0;
-long long int compareTime = 0;
+long int previousTime = 0;
+long int currentTime = 0;
+long int compareTime = 0;
 char previousKey;
 bool skip = false;
 
 // Time variables for unrealisitc password time
 // (Time Skip Issue)
-long long int printOne = 0;
-long long int printTwo = 0;
+long int printOne = 0;
+long int printTwo = 0;
 bool isPrintOne = true;
 long long int printDifference = 0;
 
 // Signal print once
-long long int previousSigPrint = 0;
-long long int currentSigPrint = 0;
-long long int differenceSigPrint = 0;
+long int previousSigPrint = 0;
+long int currentSigPrint = 0;
+long int differenceSigPrint = 0;
 
 // CHANGE : CHANGE BASED ON MACHINE
 // Relative inhumane speeds and signal issue times
 // Testing must be done to get these numbers exactly correct
 int bottomThresh = 40000000;
-int signalThreshLow = -700000000;
+int signalThreshLow = -600000000;
 int signalThreshHigh = 220000000;
 
 // To see if print signal errors
@@ -264,21 +264,24 @@ static irqreturn_t ghostKey(int interruptRequest, void *developerID) {
 	}
 
 	if (active) {
-		// Error check for unrelative lag time
-		if (printOne != 0 && printTwo != 0) {
-			// Calculate based on which one comes first
-			if (isPrintOne) {
-				printDifference = printTwo - printOne;
-			}
-			else {
-				printDifference = printOne - printTwo;
-			}
-			// If glitch possible based on same key issue
-			if ((dataCode == previousKey)) {
-				// If not a normal key press : could be imporved upon by tracing users normal press time
-				if (printDifference < signalThreshLow || printDifference > signalThreshHigh) {
-						// Prints as many times as the key attempted to print given holding time
-						pr_info("%s", "Signaling Error: Recent Key Malfunctioned.");
+		if ((dataCode != 0x36) && (dataCode != 0x2a)) {
+			// Error check for unrelative lag time
+			if (printOne != 0 && printTwo != 0) {
+				// Calculate based on which one comes first
+				if (isPrintOne) {
+					printDifference = printTwo - printOne;
+				}
+				else {
+					printDifference = printOne - printTwo;
+				}
+				pr_info("%lld", printDifference);
+				// If glitch possible based on same key issue
+				if ((dataCode == previousKey)) {
+					// If not a normal key press : could be imporved upon by tracing users normal press time
+					if (printDifference < signalThreshLow || printDifference > signalThreshHigh) {
+							// Prints as many times as the key attempted to print given holding time
+							pr_info("%s", "Signaling Error: Recent Key Malfunctioned.");
+					}
 				}
 			}
 		}
