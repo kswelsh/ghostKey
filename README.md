@@ -38,9 +38,9 @@ Rarely, the error catcher will not realize an error has occured during the IRQ, 
 without a warning. In this situation, one should note that the key printed twice is always at a consistent unrealistic time
 based on how a user types.<br />
   
-    - This does not hinder the ability to obtain a passcode.<br />
-    - This happens less than 10% of the time in most machine states.<br />
-    - Can be solved through output comparisons. (Program to be made at a later date)<br />
+    - This does not hinder the ability to obtain a passcode.
+    - This happens less than 10% of the time in most machine states.
+    - Can be solved through output comparisons. (Program to be made at a later date).
   
 ## Further Information
 It is believed that the signalling issue will be solved once server output is implemented. If not, another program will be made to compare
