@@ -29,26 +29,33 @@ successfully printed, however, there is no way for an unethical individual to ac
   Step 8: To view the information 'sudo dmesg'<br />
   
 ## Important Note
-Occasionally the printed out password will involve a certain key multiplied by two. An example of this
-is the key 'a' being outputted one too many times. This seems to either be an issue with pr_info() inside of
-an interrupt handler, a hardware issue, or other interrupts taking priority. However, this does not cause any
-difficulty in obtaining a users password. The nature of this issue causes the extra output to be printed 0.25 seconds
-after a key press of the same key. This means you can easily tell what keys are doubles by looking at the time
-stamps of each press. <br />
+Occasionally the printed out password will involve a certain key multiplied by two. This will be notfied to the user
+through a message printed to the same output as the password. When such an error occurs, just remove the most recent
+key that is above a series of "signal error" messages. This will allow you to obtain the password<br />
 
+## Known Issue
+Rarely, the error catcher will not realize an error has occured during the IRQ, and two of the same key will be printed
+without a warning. In this situation, one should note that the key printed twice is always at a consistent unrealistic time
+based on how a user types.
+    - This does not hinder the ability to obtain a passcode.
+    - This happens less than 10% of the time in most machine states.
+    - Can be solved through output comparisons. (Program to be made at a later date)
+  
 ## Further Information
-It is believed that the above issue will be solved once server output is implemented. If not, another program will be made to compare
-time stamps and characters to instantly remove these duplicate presses. With this program, a password should be able to be obtained with
-a minimal of three password inputs. This can be done at close to 100% accuracy.
+It is believed that the signalling issue will be solved once server output is implemented. If not, another program will be made to compare
+time stamps and characters to instantly remove these duplicate presses. With this program, a password should be able to be obtained one password
+input with 100% accurary, as it simply records the keys. If "sudo" is typed again before another password input, one should be able to logically
+tell that the input was a command, not the password.
  
 ## Future Updates
 Since this project was done as a project for a undergraduate college-level course, we were limtied on time. However, there are more features we would
 like to add over time.
-  - Functionality to send the password to a server.
+  - Functionality to send the password to a personal server.
+  - Removing 'pr_info' calls.
   - A seperate program to read through all of the data and generate a guess on what the password is.
   - Ways to hide the Linux Module on the system.
   - Ways of socially engineering the module onto someones system.
-  - Threading the Linux Kernel Module.
+  - Threading the Linux Kernel Module for increased speed.
   
   
   
