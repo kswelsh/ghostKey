@@ -37,6 +37,7 @@ key that is above a series of "signal error" messages. This will allow you to ob
 Rarely, the error catcher will not realize an error has occured during the IRQ, and two of the same key will be printed
 without a warning. In this situation, one should note that the key printed twice is always at a consistent unrealistic time
 based on how a user types.<br />
+  
     - This does not hinder the ability to obtain a passcode.<br />
     - This happens less than 10% of the time in most machine states.<br />
     - Can be solved through output comparisons. (Program to be made at a later date)<br />
